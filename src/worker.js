@@ -59,7 +59,8 @@ export default {
 
 // Convert one adsb.lol aircraft into an OpenSky state array (units: m, m/s).
 // Index: 0 icao24, 1 callsign, 2 country, 5 lon, 6 lat, 7 baro alt, 8 on ground,
-//        9 speed, 10 heading, 11 vertical rate, 13 GPS alt
+//        9 speed, 10 heading, 11 vertical rate, 13 GPS alt, 14 squawk
+// Extras after OpenSky's fields: 17 registration, 18 ICAO type code (e.g. "A388")
 function toOpenSkyState(a) {
   const FT = 0.3048;
   const onGround = a.alt_baro === "ground";
@@ -80,6 +81,10 @@ function toOpenSkyState(a) {
     rateFtMin == null ? null : (rateFtMin * FT) / 60, // ft/min -> m/s
     null,
     gpsAlt,
+    a.squawk ?? null,
+    false, 0, // spi, position source (unused)
+    a.r ?? null,
+    a.t ?? null,
   ];
 }
 

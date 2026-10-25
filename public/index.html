@@ -2,61 +2,129 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1020">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070b16">
   <title>Planes Above Me</title>
+  <meta name="description" content="See the aircraft flying above you right now, anywhere in the world.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <header>
-      <h1>✈️ Planes Above Me</h1>
-      <p class="subtitle">Live aircraft around you, anywhere in the world</p>
+  <div class="app">
+
+    <!-- Top bar: name, where you are, search box, clock -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">✈</div>
+        <div>
+          <h1>Planes Above Me</h1>
+          <p id="placeName" class="place">Finding your location…</p>
+        </div>
+      </div>
+
+      <form id="locForm" class="locsearch" autocomplete="off">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="locInput" type="text" inputmode="search" enterkeyhint="search"
+               placeholder="Search a place, or type lat, lon" aria-label="Search a place or type coordinates">
+        <button type="submit" class="btn btn-ghost">Go</button>
+        <button type="button" id="gpsBtn" class="btn btn-ghost" title="Use my GPS location">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>
+          <span>GPS</span>
+        </button>
+      </form>
+
+      <div class="clock" aria-label="Current time">
+        <span id="clockTime">--:--:--</span>
+        <span id="clockDate"></span>
+      </div>
     </header>
 
-    <!-- Where and when you are -->
-    <section class="panel" aria-label="Your position">
-      <div class="row"><span class="label">Time</span><span id="clock">–</span></div>
-      <div class="row"><span class="label">Latitude</span><span id="lat">–</span></div>
-      <div class="row"><span class="label">Longitude</span><span id="lon">–</span></div>
-      <div class="row"><span class="label">Altitude</span><span id="alt">–</span></div>
-      <p id="locStatus" class="muted">Asking for your location…</p>
-    </section>
+    <main class="layout">
 
-    <!-- Controls -->
-    <section class="controls">
-      <button id="showBtn" class="big" disabled>Show planes above me</button>
+      <!-- Live map -->
+      <section class="mapwrap" aria-label="Map of aircraft around you">
+        <div id="map"></div>
 
-      <div class="options">
-        <label for="radius">Radius</label>
-        <select id="radius">
-          <option value="10">10 km</option>
-          <option value="25">25 km</option>
-          <option value="50" selected>50 km</option>
-        </select>
+        <!-- Shown until the first search -->
+        <div id="mapOverlay" class="overlay">
+          <div class="overlay-card">
+            <div class="radar" aria-hidden="true"><span></span></div>
+            <h2>What's flying above you?</h2>
+            <p id="overlayText">Allow location access, or search for a place above.</p>
+            <button id="showBtn" class="btn btn-cta" disabled>Show planes above me</button>
+          </div>
+        </div>
 
-        <button id="refreshBtn" class="small" disabled>↻ Refresh</button>
+        <div class="legend" aria-label="Altitude colours">
+          <span>Altitude</span>
+          <i style="--c:var(--alt0)"></i>0
+          <i style="--c:var(--alt1)"></i>5k
+          <i style="--c:var(--alt2)"></i>15k
+          <i style="--c:var(--alt3)"></i>25k
+          <i style="--c:var(--alt4)"></i>35k+ ft
+        </div>
+      </section>
 
-        <label class="check">
-          <input type="checkbox" id="autoRefresh"> Auto every 15 s
-        </label>
-      </div>
-    </section>
+      <!-- Side panel (below the map on phones) -->
+      <aside class="panel">
+        <div class="position">
+          <div><span class="k">Latitude</span><span id="lat" class="v mono">–</span></div>
+          <div><span class="k">Longitude</span><span id="lon" class="v mono">–</span></div>
+          <div><span class="k">Altitude</span><span id="alt" class="v mono">–</span></div>
+          <div><span class="k">Source</span><span id="source" class="v">–</span></div>
+        </div>
+        <p id="locStatus" class="locstatus">Asking for your location…</p>
 
-    <!-- Messages and results -->
-    <p id="message" class="message" hidden></p>
-    <p id="summary" class="muted"></p>
-    <section id="results" class="results" aria-live="polite"></section>
+        <div class="controls">
+          <div class="seg" role="radiogroup" aria-label="Search radius">
+            <label><input type="radio" name="radius" value="10"><span>10 km</span></label>
+            <label><input type="radio" name="radius" value="25"><span>25 km</span></label>
+            <label><input type="radio" name="radius" value="50" checked><span>50 km</span></label>
+          </div>
+          <label class="toggle" title="Refresh every 15 seconds">
+            <input type="checkbox" id="autoRefresh" checked>
+            <span class="track"><span class="knob"></span></span>
+            <span>Live</span>
+          </label>
+          <button id="refreshBtn" class="btn btn-icon" title="Refresh now" aria-label="Refresh now" disabled>
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+          </button>
+        </div>
 
-    <footer class="muted">
-      Live data: <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (free, community ADS-B, ODbL),
-      in OpenSky format.
-      <br>Code on <a href="https://github.com/binethlosara109-netizen/planes-above-me" target="_blank" rel="noopener">GitHub</a>,
-      deployed automatically by Cloudflare.
-    </footer>
-  </main>
+        <div id="message" class="message" role="alert" hidden></div>
 
+        <div class="stats">
+          <div class="stat"><span class="k">Aircraft</span><span id="statCount" class="v">–</span></div>
+          <div class="stat"><span class="k">Closest</span><span id="statClosest" class="v">–</span></div>
+          <div class="stat"><span class="k">Highest</span><span id="statHighest" class="v">–</span></div>
+          <div class="stat"><span class="k">Fastest</span><span id="statFastest" class="v">–</span></div>
+        </div>
+
+        <p id="summary" class="summary"></p>
+        <ul id="list" class="list" aria-live="polite"></ul>
+
+        <footer class="credits">
+          Flights: <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL) ·
+          Details: <a href="https://www.adsbdb.com" target="_blank" rel="noopener">adsbdb</a> ·
+          Photos: <a href="https://www.planespotters.net" target="_blank" rel="noopener">planespotters.net</a> ·
+          Code on <a href="https://github.com/binethlosara109-netizen/planes-above-me" target="_blank" rel="noopener">GitHub</a>,
+          deployed automatically by Cloudflare.
+        </footer>
+
+        <!-- Aircraft details: covers the panel on desktop, slides up on phones -->
+        <div id="detail" class="detail" hidden>
+          <div class="detail-backdrop" data-close></div>
+          <article id="detailCard" class="detail-card" aria-label="Aircraft details"></article>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

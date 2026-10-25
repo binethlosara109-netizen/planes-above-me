@@ -586,7 +586,8 @@ function renderDetail(p) {
   const card = $("detailCard");
   const photo = h("div", { class: "photo" }, placeholderPhoto("Looking for a photo…"));
   const title = h("h2", {}, p.callsign);
-  const subtitle = h("p", {}, p.country ? `${flag(isoFromCountry(p.country))} Registered in ${p.country}` : "");
+  const subtitle = h("p", {}); // airline (filled in when known)
+  const regLine = h("p", {}, p.country ? `${flag(isoFromCountry(p.country))} Registered in ${p.country}` : "");
   const routeBox = h("div", { class: "route" }, h("div", { class: "note" }, "Looking up the route…"));
   const aircraftGrid = h("div", { class: "grid" },
     cell("Type", p.typeCode || "–", "d-type"),
@@ -598,7 +599,7 @@ function renderDetail(p) {
     h("button", { class: "close", "data-close": "", "aria-label": "Close" }, "×"),
     photo,
     h("div", { class: "d-body" },
-      h("div", { class: "d-head" }, title, subtitle),
+      h("div", { class: "d-head" }, title, subtitle, regLine),
       h("div", { id: "d-alert" }),
       routeBox,
       h("div", { class: "d-section" }, "Live"),
@@ -632,7 +633,7 @@ function renderDetail(p) {
       setCell("d-reg", ac.registration || p.registration || "–");
       setCell("d-owner", ac.registered_owner || "–");
       if (ac.registered_owner_country_iso_name) {
-        subtitle.textContent = `${flag(ac.registered_owner_country_iso_name)} Registered in ${ac.registered_owner_country_name}`;
+        regLine.textContent = `${flag(ac.registered_owner_country_iso_name)} Registered in ${ac.registered_owner_country_name}`;
       }
     }
   });

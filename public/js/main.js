@@ -534,18 +534,27 @@ function renderDetail(p) {
   refreshDetailLive();
 
   const lite = settings().lite;
-  Promise.all([lite ? null : api.getPhoto(p.hex), api.getAircraft(p.hex)]).then(([ps, ac]) => {
+  const photoP = lite ? Promise.resolve(null) : api.getPhoto(p.hex);
+  const aircraftP = api.getAircraft(p.hex);
+  // Show the planespotters photo as soon as it arrives; otherwise try adsbdb's.
+  photoP.then(async (ps) => {
     if (selectedHex !== p.hex) return;
     if (ps) {
       photo.replaceChildren(
         h("img", { src: ps.thumbnail_large?.src || ps.thumbnail?.src, alt: `${p.registration || p.callsign}` }),
         h("span", { class: "credit" }, "📷 ", h("a", { href: ps.link, target: "_blank", rel: "noopener" }, `${ps.photographer} / planespotters.net`)));
       photo.dataset.src = ps.thumbnail_large?.src || "";
-    } else if (ac?.url_photo && !lite) {
-      photo.replaceChildren(h("img", { src: ac.url_photo, alt: ac.registration || "" }), h("span", { class: "credit" }, "📷 airport-data.com"));
-    } else {
-      photo.replaceChildren(placeholderPhoto(lite ? "" : t("noPhoto")));
+      return;
     }
+    const ac = lite ? null : await aircraftP;
+    if (selectedHex !== p.hex) return;
+    photo.replaceChildren(ac?.url_photo
+      ? h("img", { src: ac.url_photo, alt: ac.registration || "" })
+      : placeholderPhoto(lite ? "" : t("noPhoto")));
+    if (ac?.url_photo) photo.append(h("span", { class: "credit" }, "📷 airport-data.com"));
+  });
+  aircraftP.then((ac) => {
+    if (selectedHex !== p.hex) return;
     if (ac) {
       setCell("d-type", [ac.manufacturer, ac.type].filter(Boolean).join(" ") || typeName || p.typeCode || "–");
       setCell("d-reg", ac.registration || p.registration || "–");
@@ -556,7 +565,7 @@ function renderDetail(p) {
     }
   });
 
-  api.flightInfo(p).then((info) => {
+  api.flightInfo(p, true).then((info) => {
     if (selectedHex !== p.hex || !info) return;
     if (info.airline) {
       const iata = info.airline.iata;

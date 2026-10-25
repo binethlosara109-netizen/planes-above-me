@@ -16,16 +16,18 @@ function cached(key, fn) {
 }
 
 // Be gentle with the free services: at most 3 requests at a time.
+// "urgent" requests (for the plane you just opened) jump the queue.
 let running = 0;
 const queue = [];
-function gently(fn) {
+function gently(fn, urgent = false) {
   return new Promise((resolve, reject) => {
-    queue.push(() => fn().then(resolve, reject).finally(() => { running--; next(); }));
+    const job = () => fn().then(resolve, reject).finally(() => { running--; next(); });
+    if (urgent) queue.unshift(job); else queue.push(job);
     next();
   });
   function next() { while (running < 3 && queue.length) { running++; queue.shift()(); } }
 }
-const getJson = (url) => gently(() => fetch(url).then((r) => (r.ok ? r.json() : null)));
+const getJson = (url, urgent) => gently(() => fetch(url).then((r) => (r.ok ? r.json() : null)), urgent);
 
 // ---------- Aircraft positions ----------
 
@@ -44,16 +46,17 @@ export async function findFlight(query) {
 
 // ---------- Airline, route, aircraft, photo ----------
 
-export const getRoute = (callsign) => cached("route:" + callsign, async () =>
-  (await getJson("https://api.adsbdb.com/v0/callsign/" + encodeURIComponent(callsign)))?.response?.flightroute || null);
+export const getRoute = (callsign, urgent) => cached("route:" + callsign, async () =>
+  (await getJson("https://api.adsbdb.com/v0/callsign/" + encodeURIComponent(callsign), urgent))?.response?.flightroute || null);
 
-export const getAirline = (icao) => cached("airline:" + icao, async () => {
-  const list = (await getJson("https://api.adsbdb.com/v0/airline/" + encodeURIComponent(icao)))?.response;
+export const getAirline = (icao, urgent) => cached("airline:" + icao, async () => {
+  const list = (await getJson("https://api.adsbdb.com/v0/airline/" + encodeURIComponent(icao), urgent))?.response;
   return Array.isArray(list) ? list[0] : null;
 });
 
+// Only asked for the plane you open, so always urgent.
 export const getAircraft = (hex) => cached("aircraft:" + hex, async () =>
-  (await getJson("https://api.adsbdb.com/v0/aircraft/" + encodeURIComponent(hex)))?.response?.aircraft || null);
+  (await getJson("https://api.adsbdb.com/v0/aircraft/" + encodeURIComponent(hex), true))?.response?.aircraft || null);
 
 export const getPhoto = (hex) => cached("photo:" + hex, async () => {
   const r = await fetch("https://api.planespotters.net/pub/photos/hex/" + encodeURIComponent(hex));
@@ -62,12 +65,12 @@ export const getPhoto = (hex) => cached("photo:" + hex, async () => {
 
 // Airline + route for a plane. Airline flights use callsigns like "UAE5"
 // (3-letter airline code + number); private flights usually use the registration.
-export function flightInfo(p) {
+export function flightInfo(p, urgent = false) {
   return cached("info:" + p.hex + p.callsign, async () => {
     if (!p.hasCallsign) return {};
     const isAirline = /^[A-Z]{3}\d/.test(p.callsign);
-    const route = isAirline ? await getRoute(p.callsign) : null;
-    const airline = route?.airline || (isAirline ? await getAirline(p.callsign.slice(0, 3)) : null);
+    const route = isAirline ? await getRoute(p.callsign, urgent) : null;
+    const airline = route?.airline || (isAirline ? await getAirline(p.callsign.slice(0, 3), urgent) : null);
     const privateFlight = !isAirline && !!p.registration &&
       p.callsign.replace(/-/g, "") === p.registration.replace(/-/g, "").toUpperCase();
     return { route, airline, privateFlight };

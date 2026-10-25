@@ -1,0 +1,130 @@
+/* Dark theme, large readable text, phone first. */
+:root {
+  --bg: #0b1020;
+  --panel: #151b30;
+  --border: #26304f;
+  --text: #eef2ff;
+  --muted: #9aa6c7;
+  --accent: #4f8cff;
+  --up: #3ddc84;
+  --down: #ff8a5c;
+  --error: #ff6b6b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 { font-size: 1.8rem; margin: 8px 0 0; }
+.subtitle { color: var(--muted); margin: 4px 0 16px; }
+.muted { color: var(--muted); font-size: 0.95rem; }
+a { color: var(--accent); }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+.label { color: var(--muted); }
+.row span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
+#locStatus { margin: 8px 0 0; }
+
+.controls { margin: 18px 0; }
+
+button {
+  font: inherit;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.45; cursor: default; }
+
+.big {
+  width: 100%;
+  padding: 18px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.small {
+  padding: 8px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 12px;
+}
+
+select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+
+.check { display: flex; align-items: center; gap: 6px; }
+.check input { width: 20px; height: 20px; }
+
+.message {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid var(--error);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.results { display: grid; gap: 12px; }
+
+/* One card per aircraft */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.callsign { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.5px; }
+.distance { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.card .row { padding: 2px 0; }
+.climbing { color: var(--up); }
+.descending { color: var(--down); }
+
+.arrow { display: inline-block; }
+
+footer { margin-top: 28px; }

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Planes Above Me</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>✈️ Planes Above Me</h1>
+      <p class="subtitle">Live aircraft around you, anywhere in the world</p>
+    </header>
+
+    <!-- Where and when you are -->
+    <section class="panel" aria-label="Your position">
+      <div class="row"><span class="label">Time</span><span id="clock">–</span></div>
+      <div class="row"><span class="label">Latitude</span><span id="lat">–</span></div>
+      <div class="row"><span class="label">Longitude</span><span id="lon">–</span></div>
+      <div class="row"><span class="label">Altitude</span><span id="alt">–</span></div>
+      <p id="locStatus" class="muted">Asking for your location…</p>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls">
+      <button id="showBtn" class="big" disabled>Show planes above me</button>
+
+      <div class="options">
+        <label for="radius">Radius</label>
+        <select id="radius">
+          <option value="10">10 km</option>
+          <option value="25">25 km</option>
+          <option value="50" selected>50 km</option>
+        </select>
+
+        <button id="refreshBtn" class="small" disabled>↻ Refresh</button>
+
+        <label class="check">
+          <input type="checkbox" id="autoRefresh"> Auto every 15 s
+        </label>
+      </div>
+    </section>
+
+    <!-- Messages and results -->
+    <p id="message" class="message" hidden></p>
+    <p id="summary" class="muted"></p>
+    <section id="results" class="results" aria-live="polite"></section>
+
+    <footer class="muted">
+      Live data: <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> and
+      <a href="https://adsb.fi" target="_blank" rel="noopener">adsb.fi</a> (free, community ADS-B, ODbL),
+      in OpenSky format.
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

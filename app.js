@@ -145,7 +145,9 @@ function showPlanes(states, radiusKm) {
     .map((s) => ({
       callsign: (s[1] || "").trim() || "Unknown",
       country: s[2],
-      altitude: s[7] ?? s[13], // prefer barometric, fall back to GPS
+      // Prefer barometric altitude; use GPS when it's missing or below zero
+      // (pressure altitude can read negative for planes about to land).
+      altitude: s[7] != null && s[7] >= 0 ? s[7] : s[13] ?? s[7],
       speed: s[9],
       heading: s[10],
       vertical: s[11],

@@ -1,28 +1,28 @@
-// Tiny relay between the website and the flight data.
+// The Cloudflare Worker for Planes Above Me.
 //
-// Why it exists:
-// - OpenSky does not let browsers on other sites read its answers (CORS),
-//   and it blocks requests coming from Cloudflare's servers.
-// - So this Worker asks adsb.lol (backup: adsb.fi) instead (free, no key, worldwide) and
-//   returns the result in OpenSky's "states" format, so the page can treat
-//   it exactly like an OpenSky answer.
+// - Website files (public/) are served by Cloudflare automatically.
+// - /api/states returns aircraft near you, in OpenSky's "states" format.
 //
-// Usage: GET https://<worker-url>/?lamin=..&lomin=..&lamax=..&lomax=..
+// Why not call OpenSky directly? OpenSky does not let browsers on other sites
+// read its answers (CORS), and it blocks requests from Cloudflare's servers.
+// So this asks adsb.lol (backup: adsb.fi) instead: free, no key, worldwide.
+//
+// Usage: GET /api/states?lamin=..&lomin=..&lamax=..&lomax=..
 
 const ADSB_LOL = "https://api.adsb.lol/v2/point";
 const ADSB_FI = "https://opendata.adsb.fi/api/v2"; // backup, same data format
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Content-Type": "application/json",
-};
-
-const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: cors });
+const json = (body, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    // Anything that isn't the API is a website file (or "not found").
+    if (url.pathname !== "/api/states") return env.ASSETS.fetch(request);
+
     // Read the bounding box the page sends.
-    const params = new URL(request.url).searchParams;
+    const params = url.searchParams;
     const box = {};
     for (const key of ["lamin", "lomin", "lamax", "lomax"]) {
       box[key] = Number(params.get(key));

@@ -1,10 +1,10 @@
 // Planes Above Me – shows live aircraft near your current location.
-// Data comes through a tiny Cloudflare relay (see relay/worker.js). It speaks
-// the OpenSky API format, but fetches from adsb.lol / adsb.fi, because OpenSky
-// blocks direct browser requests and requests from Cloudflare.
+// Data comes from this site's own Cloudflare Worker (see src/worker.js). It
+// speaks the OpenSky API format, but fetches from adsb.lol / adsb.fi, because
+// OpenSky blocks direct browser requests and requests from Cloudflare.
 
-// Address of the relay. It takes ?lamin=&lomin=&lamax=&lomax= like OpenSky.
-const API_URL = "https://planes-above-me-relay.binethwise.workers.dev/";
+// Takes ?lamin=&lomin=&lamax=&lomax= like OpenSky.
+const API_URL = "/api/states";
 
 const AUTO_REFRESH_MS = 15000;
 const EARTH_RADIUS_KM = 6371;
@@ -114,9 +114,16 @@ async function loadPlanes() {
   try {
     if (!navigator.onLine) throw new Error("offline");
 
-    const response = await fetch(url);
     // 429 = rate limit; the free services sometimes answer 403 when busy too.
-    if (response.status === 429 || response.status === 403) {
+    // They usually recover within seconds, so quietly try up to 2 more times.
+    const isBusy = (r) => r.status === 429 || r.status === 403;
+    let response = await fetch(url);
+    for (let retry = 1; retry <= 2 && isBusy(response); retry++) {
+      $("summary").textContent = "Data service busy, trying again (" + retry + "/2)…";
+      await new Promise((r) => setTimeout(r, 3000));
+      response = await fetch(url);
+    }
+    if (isBusy(response)) {
       showMessage("The free flight data service is busy (rate limit). Wait a few seconds and try again.");
       $("summary").textContent = "";
       return;

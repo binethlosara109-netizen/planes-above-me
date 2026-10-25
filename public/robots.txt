@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://planes-above-me.binethwise.workers.dev/sitemap.xml

@@ -1,96 +1,131 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#070b16">
-  <title>Planes Above Me</title>
-  <meta name="description" content="See the aircraft flying above you right now, anywhere in the world.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+  <title>Planes Above Me – live aircraft overhead, anywhere in the world</title>
+  <meta name="description" content="See the aircraft flying above you right now: live map, airline, route, photo of the actual plane, altitude and speed. Free, worldwide, no sign-up.">
+  <link rel="canonical" href="https://planes-above-me.binethwise.workers.dev/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Planes Above Me">
+  <meta property="og:title" content="Planes Above Me – what's flying over you right now?">
+  <meta property="og:description" content="Live map of the aircraft above you, with airline, route and a photo of the actual plane. Free, worldwide.">
+  <meta property="og:url" content="https://planes-above-me.binethwise.workers.dev/">
+  <meta property="og:image" content="https://planes-above-me.binethwise.workers.dev/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Planes Above">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <a class="skip" href="#list" data-i18n="tabFlights">Flights</a>
   <div class="app">
 
-    <!-- Top bar: name, where you are, search box, clock -->
+    <!-- Top bar: name, where you are, search box, buttons, clock -->
     <header class="topbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true">✈</div>
+        <img class="logo" src="/icons/icon.svg" alt="" width="42" height="42">
         <div>
-          <h1>Planes Above Me</h1>
-          <p id="placeName" class="place">Finding your location…</p>
+          <h1 data-i18n="appName">Planes Above Me</h1>
+          <p id="placeName" class="place" data-i18n="finding">Finding your location…</p>
         </div>
       </div>
 
-      <form id="locForm" class="locsearch" autocomplete="off">
+      <form id="locForm" class="locsearch" autocomplete="off" role="search">
         <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="locInput" type="text" inputmode="search" enterkeyhint="search"
-               placeholder="Search a place, or type lat, lon" aria-label="Search a place or type coordinates">
-        <button type="submit" class="btn btn-ghost">Go</button>
-        <button type="button" id="gpsBtn" class="btn btn-ghost" title="Use my GPS location">
+               data-i18n-ph="searchPh" data-i18n-label="searchPh" placeholder="Search a place, or type lat, lon">
+        <button type="submit" class="btn btn-ghost" data-i18n="go">Go</button>
+        <button type="button" id="gpsBtn" class="btn btn-ghost" data-i18n-label="srcGps">
           <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>
-          <span>GPS</span>
+          <span data-i18n="gps">GPS</span>
         </button>
       </form>
 
-      <div class="clock" aria-label="Current time">
-        <span id="clockTime">--:--:--</span>
-        <span id="clockDate"></span>
+      <div class="top-right">
+        <div class="clock" aria-live="off">
+          <span id="clockTime">--:--:--</span>
+          <span id="clockDate"></span>
+        </div>
+        <button id="installBtn" class="btn btn-icon" data-i18n-label="installApp" hidden>
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </button>
+        <button id="shareBtn" class="btn btn-icon" data-i18n-label="share">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
+        <button id="settingsBtn" class="btn btn-icon" data-i18n-label="settings">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </button>
       </div>
     </header>
 
     <main class="layout">
 
       <!-- Live map -->
-      <section class="mapwrap" aria-label="Map of aircraft around you">
+      <section class="mapwrap" aria-label="Map">
         <div id="map"></div>
 
-        <!-- Shown until the first search -->
+        <div id="banner" class="banner" role="status" hidden></div>
+
         <div id="mapOverlay" class="overlay">
           <div class="overlay-card">
             <div class="radar" aria-hidden="true"><span></span></div>
-            <h2>What's flying above you?</h2>
-            <p id="overlayText">Allow location access, or search for a place above.</p>
-            <button id="showBtn" class="btn btn-cta" disabled>Show planes above me</button>
+            <h2 data-i18n="whatsFlying">What's flying above you?</h2>
+            <p id="overlayText" data-i18n="allowLoc">Allow location access, or search for a place above.</p>
+            <button id="showBtn" class="btn btn-cta" disabled data-i18n="showPlanes">Show planes above me</button>
           </div>
         </div>
 
-        <div class="legend" aria-label="Altitude colours">
-          <span>Altitude</span>
+        <div class="legend" aria-hidden="true">
+          <span data-i18n="alt">Altitude</span>
           <i style="--c:var(--alt0)"></i>0
           <i style="--c:var(--alt1)"></i>5k
           <i style="--c:var(--alt2)"></i>15k
           <i style="--c:var(--alt3)"></i>25k
           <i style="--c:var(--alt4)"></i>35k+ ft
         </div>
+
+        <button id="arBtn" class="btn ar-fab" data-i18n-label="arStart">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>AR</span>
+        </button>
       </section>
 
       <!-- Side panel (below the map on phones) -->
       <aside class="panel">
-        <div class="position">
-          <div><span class="k">Latitude</span><span id="lat" class="v mono">–</span></div>
-          <div><span class="k">Longitude</span><span id="lon" class="v mono">–</span></div>
-          <div><span class="k">Altitude</span><span id="alt" class="v mono">–</span></div>
-          <div><span class="k">Source</span><span id="source" class="v">–</span></div>
+        <div class="posline" aria-live="off">
+          <span><b class="k" data-i18n="lat">Latitude</b> <span id="lat" class="mono">–</span></span>
+          <span><b class="k" data-i18n="lon">Longitude</b> <span id="lon" class="mono">–</span></span>
+          <span><b class="k" data-i18n="alt">Altitude</b> <span id="alt" class="mono">–</span></span>
+          <span id="source" class="srcchip">–</span>
         </div>
-        <p id="locStatus" class="locstatus">Asking for your location…</p>
+        <p id="locStatus" class="locstatus" data-i18n="finding">Finding your location…</p>
 
         <div class="controls">
-          <div class="seg" role="radiogroup" aria-label="Search radius">
-            <label><input type="radio" name="radius" value="10"><span>10 km</span></label>
-            <label><input type="radio" name="radius" value="25"><span>25 km</span></label>
-            <label><input type="radio" name="radius" value="50" checked><span>50 km</span></label>
+          <div class="seg" role="radiogroup" data-i18n-label="radius">
+            <label><input type="radio" name="radius" value="10"><span data-r="10">10 km</span></label>
+            <label><input type="radio" name="radius" value="25"><span data-r="25">25 km</span></label>
+            <label><input type="radio" name="radius" value="50" checked><span data-r="50">50 km</span></label>
           </div>
-          <label class="toggle" title="Refresh every 15 seconds">
+          <label class="toggle">
             <input type="checkbox" id="autoRefresh" checked>
             <span class="track"><span class="knob"></span></span>
-            <span>Live</span>
+            <span data-i18n="live">Live</span>
           </label>
-          <button id="refreshBtn" class="btn btn-icon" title="Refresh now" aria-label="Refresh now" disabled>
+          <button id="refreshBtn" class="btn btn-icon" data-i18n-label="refresh" disabled>
             <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
           </button>
         </div>
@@ -98,33 +133,133 @@
         <div id="message" class="message" role="alert" hidden></div>
 
         <div class="stats">
-          <div class="stat"><span class="k">Aircraft</span><span id="statCount" class="v">–</span></div>
-          <div class="stat"><span class="k">Closest</span><span id="statClosest" class="v">–</span></div>
-          <div class="stat"><span class="k">Highest</span><span id="statHighest" class="v">–</span></div>
-          <div class="stat"><span class="k">Fastest</span><span id="statFastest" class="v">–</span></div>
+          <div class="stat"><span class="k" data-i18n="aircraft">Aircraft</span><span id="statCount" class="v">–</span></div>
+          <div class="stat"><span class="k" data-i18n="closest">Closest</span><span id="statClosest" class="v">–</span></div>
+          <div class="stat"><span class="k" data-i18n="highest">Highest</span><span id="statHighest" class="v">–</span></div>
+          <div class="stat"><span class="k" data-i18n="fastest">Fastest</span><span id="statFastest" class="v">–</span></div>
         </div>
 
-        <p id="summary" class="summary"></p>
-        <ul id="list" class="list" aria-live="polite"></ul>
+        <nav class="tabs" role="tablist">
+          <button role="tab" id="tabbtn-flights" aria-controls="tab-flights" aria-selected="true" data-tab="flights" data-i18n="tabFlights">Flights</button>
+          <button role="tab" id="tabbtn-airport" aria-controls="tab-airport" aria-selected="false" data-tab="airport" data-i18n="tabAirport">Airport</button>
+          <button role="tab" id="tabbtn-sky" aria-controls="tab-sky" aria-selected="false" data-tab="sky" data-i18n="tabSky">Sky</button>
+          <button role="tab" id="tabbtn-me" aria-controls="tab-me" aria-selected="false" data-tab="me" data-i18n="tabMe">My log</button>
+        </nav>
+
+        <!-- Flights -->
+        <section id="tab-flights" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-flights">
+          <div class="chips" role="group">
+            <button class="chip on" data-filter="all" data-i18n="fAll">All</button>
+            <button class="chip" data-filter="airline" data-i18n="fAirline">Airlines</button>
+            <button class="chip" data-filter="private" data-i18n="fPrivate">Private</button>
+            <button class="chip" data-filter="military" data-i18n="fMilitary">Military</button>
+            <button class="chip" data-filter="rare" data-i18n="fRare">Rare</button>
+            <button class="chip" data-filter="climb" data-i18n="fClimb">Climbing</button>
+            <button class="chip" data-filter="desc" data-i18n="fDesc">Descending</button>
+          </div>
+          <form id="findForm" class="find" autocomplete="off">
+            <input id="findInput" type="search" enterkeyhint="search" data-i18n-ph="findPh" data-i18n-label="findPh" placeholder="Filter, or find any flight (e.g. EK5)">
+          </form>
+          <p id="summary" class="summary"></p>
+          <ul id="list" class="list" tabindex="-1"></ul>
+        </section>
+
+        <!-- Nearest airport -->
+        <section id="tab-airport" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-airport" hidden>
+          <div id="airportBox"></div>
+        </section>
+
+        <!-- Sky view -->
+        <section id="tab-sky" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-sky" hidden>
+          <p class="hint" data-i18n="skyHint">Planes as you'd see them from the ground.</p>
+          <div id="skyHost" class="skyhost"></div>
+          <button id="arBtn2" class="btn btn-cta" data-i18n="arStart">Look up (AR camera)</button>
+        </section>
+
+        <!-- My spotting log -->
+        <section id="tab-me" class="tabpanel" role="tabpanel" aria-labelledby="tabbtn-me" hidden>
+          <div id="logBox"></div>
+        </section>
 
         <footer class="credits">
-          Flights: <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL) ·
-          Details: <a href="https://www.adsbdb.com" target="_blank" rel="noopener">adsbdb</a> ·
-          Photos: <a href="https://www.planespotters.net" target="_blank" rel="noopener">planespotters.net</a> ·
-          Code on <a href="https://github.com/binethlosara109-netizen/planes-above-me" target="_blank" rel="noopener">GitHub</a>,
-          deployed automatically by Cloudflare.
+          <p id="cityLinks" class="cities"></p>
+          <p>
+            Flights: <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL) ·
+            <a href="https://www.adsbdb.com" target="_blank" rel="noopener">adsbdb</a> ·
+            Photos: <a href="https://www.planespotters.net" target="_blank" rel="noopener">planespotters.net</a> ·
+            Weather: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> ·
+            Airports: <a href="https://ourairports.com" target="_blank" rel="noopener">OurAirports</a> ·
+            <a href="/stats.html" data-i18n="statsLink">Site stats</a> ·
+            <a href="/privacy.html" data-i18n="privacyLink">Privacy</a> ·
+            <a href="https://github.com/binethlosara109-netizen/planes-above-me" target="_blank" rel="noopener">GitHub</a>
+          </p>
         </footer>
 
         <!-- Aircraft details: covers the panel on desktop, slides up on phones -->
         <div id="detail" class="detail" hidden>
           <div class="detail-backdrop" data-close></div>
-          <article id="detailCard" class="detail-card" aria-label="Aircraft details"></article>
+          <article id="detailCard" class="detail-card" role="dialog" aria-modal="false" tabindex="-1"></article>
         </div>
       </aside>
     </main>
   </div>
 
+  <!-- AR camera -->
+  <div id="ar" class="ar" hidden>
+    <video playsinline muted autoplay></video>
+    <div class="ar-crosshair" aria-hidden="true"></div>
+    <div class="ar-labels" aria-hidden="true"></div>
+    <div class="ar-status" role="status"></div>
+    <button class="ar-close btn" data-i18n="close">Close</button>
+  </div>
+
+  <!-- Settings -->
+  <dialog id="settingsDlg" class="sheet">
+    <form method="dialog" id="settingsForm">
+      <header><h2 data-i18n="settings">Settings</h2><button class="btn btn-icon" value="close" data-i18n-label="close">✕</button></header>
+      <div class="fields">
+        <label><span data-i18n="language">Language</span><select name="lang" id="langSelect"></select></label>
+        <label><span data-i18n="units">Units</span>
+          <select name="units">
+            <option value="metric" data-i18n="unitsMetric">Metric</option>
+            <option value="imperial" data-i18n="unitsImperial">Imperial</option>
+            <option value="aviation" data-i18n="unitsAviation">Aviation</option>
+          </select></label>
+        <label><span data-i18n="clock">Clock</span>
+          <select name="clock"><option value="24" data-i18n="clock24">24-hour</option><option value="12" data-i18n="clock12">12-hour</option></select></label>
+        <label><span data-i18n="theme">Theme</span>
+          <select name="theme">
+            <option value="dark" data-i18n="themeDark">Dark</option>
+            <option value="light" data-i18n="themeLight">Light</option>
+            <option value="auto" data-i18n="themeAuto">Auto</option>
+          </select></label>
+        <label><span data-i18n="mapStyle">Map</span>
+          <select name="mapStyle">
+            <option value="dark" data-i18n="mapDark">Dark</option>
+            <option value="satellite" data-i18n="mapSat">Satellite</option>
+            <option value="light" data-i18n="mapLight">Light</option>
+          </select></label>
+        <label><span data-i18n="radiusDefault">Default radius</span>
+          <select name="radius"><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>
+        <label class="check"><input type="checkbox" name="trails"><span data-i18n="trails">Flight trails</span></label>
+        <label class="check"><input type="checkbox" name="labels"><span data-i18n="labels">Callsign labels</span></label>
+        <label class="check"><input type="checkbox" name="sound"><span data-i18n="sound">Sound</span></label>
+        <label class="check"><input type="checkbox" name="contrast"><span data-i18n="contrast">High contrast</span></label>
+        <label class="check"><input type="checkbox" name="lite"><span data-i18n="lite">Lite mode</span></label>
+        <h3 data-i18n="alerts">Alerts</h3>
+        <label class="check"><input type="checkbox" name="overheadAlert"><span data-i18n="overheadAlert">Alert overhead</span></label>
+        <label class="check"><input type="checkbox" name="notify"><span data-i18n="notify">Notifications</span></label>
+        <label class="wide"><span data-i18n="watchlist">Watchlist</span><input name="watchlist" type="text" data-i18n-ph="watchPh" placeholder="e.g. EK5, QTR, A388"></label>
+      </div>
+      <footer><button class="btn btn-cta" value="done" data-i18n="done">Done</button></footer>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="srLive" class="sr-only" aria-live="polite"></div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <script src="app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+  <script type="module" src="/js/main.js"></script>
 </body>
 </html>

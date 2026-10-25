@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy – Planes Above Me</title>
+  <meta name="description" content="How Planes Above Me handles your location and data: your location stays on your device.">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/pages.css">
+</head>
+<body>
+  <main>
+    <p><a href="/">← Planes Above Me</a></p>
+    <h1>🔒 Privacy</h1>
+    <p class="lead">Short version: <b>your location stays on your device</b>. There are no accounts, no cookies, no ads and no tracking.</p>
+
+    <h2>Your location</h2>
+    <p>Your browser gives the page your GPS position, or you type a place. The page uses it to ask for aircraft nearby: it sends a box around you to our server, which asks the free flight-data service <a href="https://adsb.lol">adsb.lol</a>. We don't store your location. Your last typed place is remembered <i>in your own browser</i> so the site works when GPS doesn't.</p>
+
+    <h2>Other free services the page talks to</h2>
+    <ul>
+      <li><a href="https://www.adsbdb.com">adsbdb</a>: airline, route and aircraft details (sends the aircraft's code, not your location).</li>
+      <li><a href="https://www.planespotters.net">planespotters.net</a>: aircraft photos (sends the aircraft's code).</li>
+      <li><a href="https://open-meteo.com">Open-Meteo</a>: weather for the Airport tab (sends your approximate location).</li>
+      <li><a href="https://nominatim.org">OpenStreetMap Nominatim</a>: place search and your town's name.</li>
+      <li>Esri map tiles, Google Fonts, cdnjs (map library) and kiwi.com (airline logos).</li>
+    </ul>
+    <p>Like any website, these services see your IP address when your browser loads from them.</p>
+
+    <h2>What we count</h2>
+    <p>For the <a href="/stats.html">public stats page</a>, we count visits per day per country (worked out by Cloudflare from the connection; we never store IP addresses), and how many aircraft were seen per ~100 km area. If the page hits an error, it sends the error message (not your location) so it can be fixed.</p>
+
+    <h2>Leaderboard</h2>
+    <p>Only if you choose to join: your nickname and the aircraft <i>types</i> you've spotted (like "A388"). Your spotting log itself stays in your browser.</p>
+
+    <h2>Camera and motion (AR mode)</h2>
+    <p>Used only while AR mode is open, entirely on your phone. Nothing is recorded or sent.</p>
+
+    <h2>Clearing your data</h2>
+    <p>Everything kept on your device (settings, log, last place) is removed when you clear this site's data in your browser.</p>
+  </main>
+</body>
+</html>

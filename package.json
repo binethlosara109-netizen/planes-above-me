@@ -1,0 +1,9 @@
+{
+  "name": "planes-above-me",
+  "private": true,
+  "type": "module",
+  "description": "See the aircraft flying above you right now, anywhere in the world.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

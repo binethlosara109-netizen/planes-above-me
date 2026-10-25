@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Site stats – Planes Above Me</title>
+  <meta name="description" content="Live stats for Planes Above Me: visitors by country, the busiest skies right now and the spotting leaderboard.">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/pages.css">
+</head>
+<body>
+  <main>
+    <p><a href="/">← Planes Above Me</a></p>
+    <h1>📊 Site stats</h1>
+    <p class="lead">Counted without cookies or IP addresses. Updates every 30 seconds.</p>
+
+    <section class="tiles">
+      <div class="tile"><span>Visits today</span><b id="today">–</b></div>
+      <div class="tile"><span>Visits this week</span><b id="week">–</b></div>
+      <div class="tile"><span>Countries this week</span><b id="ncountries">–</b></div>
+      <div class="tile"><span>Errors (24 h)</span><b id="errors">–</b></div>
+    </section>
+
+    <h2>Visits per day</h2>
+    <div id="days" class="bars"></div>
+
+    <h2>Top countries (7 days)</h2>
+    <ol id="countries" class="table"></ol>
+
+    <h2>Busiest skies (last hour)</h2>
+    <ol id="skies" class="table"></ol>
+
+    <h2>🏆 Spotting leaderboard</h2>
+    <ol id="leaders" class="table"></ol>
+  </main>
+
+  <script type="module">
+    const $ = (id) => document.getElementById(id);
+    const flag = (iso) => /^[A-Z]{2}$/.test(iso || "") ? String.fromCodePoint(...[...iso].map((c) => 0x1f1a5 + c.charCodeAt(0))) : "🌐";
+    const regionName = (iso) => { try { return new Intl.DisplayNames([navigator.language], { type: "region" }).of(iso); } catch { return iso; } };
+    const li = (...cells) => {
+      const el = document.createElement("li");
+      cells.forEach((c) => { const s = document.createElement("span"); s.textContent = c; el.append(s); });
+      return el;
+    };
+    const empty = (el) => el.replaceChildren(li("No data yet", ""));
+
+    async function load() {
+      const s = await fetch("/api/stats").then((r) => r.json()).catch(() => null);
+      if (!s || s.error) return;
+      const week = s.visitsByDay.reduce((a, d) => a + d.n, 0);
+      $("today").textContent = s.visitsToday.toLocaleString();
+      $("week").textContent = week.toLocaleString();
+      $("ncountries").textContent = s.countries.length;
+      $("errors").textContent = s.errorsToday;
+
+      const max = Math.max(1, ...s.visitsByDay.map((d) => d.n));
+      $("days").replaceChildren(...s.visitsByDay.map((d) => {
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.setProperty("--h", (d.n / max) * 100 + "%");
+        bar.title = `${d.day}: ${d.n}`;
+        const label = document.createElement("span");
+        label.textContent = new Date(d.day).toLocaleDateString([], { weekday: "short" });
+        const n = document.createElement("b");
+        n.textContent = d.n;
+        bar.append(n, label);
+        return bar;
+      }));
+      if (!s.visitsByDay.length) $("days").textContent = "No data yet";
+
+      s.countries.length ? $("countries").replaceChildren(...s.countries.map((c) => li(`${flag(c.country)} ${regionName(c.country)}`, c.n.toLocaleString()))) : empty($("countries"));
+      s.busiestSkies.length ? $("skies").replaceChildren(...s.busiestSkies.map((a) => {
+        const el = li(`${a.lat.toFixed(1)}°, ${a.lon.toFixed(1)}°`, `${a.planes} ✈`);
+        const link = document.createElement("a");
+        link.href = `/?lat=${a.lat}&lon=${a.lon}&r=50`;
+        link.textContent = " view →";
+        el.firstChild.append(link);
+        return el;
+      })) : empty($("skies"));
+      s.leaderboard.length ? $("leaders").replaceChildren(...s.leaderboard.map((r, i) => li(`${["🥇", "🥈", "🥉"][i] || i + 1}  ${r.nick}`, `${r.types} types`))) : empty($("leaders"));
+    }
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

@@ -15,7 +15,7 @@ The code lives here on GitHub and **Cloudflare deploys it automatically on every
   skipping planes on the ground.
 - `src/worker.js` – the Cloudflare Worker behind `/api/states`. OpenSky blocks requests from
   other websites (CORS) and from Cloudflare, so it fetches live data from
-  [adsb.lol](https://adsb.lol) (backup: [adsb.fi](https://adsb.fi)) and returns it in the
+  [adsb.lol](https://adsb.lol) and returns it in the
   OpenSky `states` format.
 
 ## Updating

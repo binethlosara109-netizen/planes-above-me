@@ -1,6 +1,6 @@
 // Planes Above Me – shows live aircraft near your current location.
 // Data comes from this site's own Cloudflare Worker (see src/worker.js). It
-// speaks the OpenSky API format, but fetches from adsb.lol / adsb.fi, because
+// speaks the OpenSky API format, but fetches from adsb.lol, because
 // OpenSky blocks direct browser requests and requests from Cloudflare.
 
 // Takes ?lamin=&lomin=&lamax=&lomax= like OpenSky.
@@ -12,6 +12,12 @@ const EARTH_RADIUS_KM = 6371;
 // Remember where we are and the auto-refresh timer.
 let myPosition = null; // { lat, lon, alt }
 let autoTimer = null;
+
+// The last successful answer, shown again (marked as old) if the data
+// service is busy: { states, time, lat, lon, radiusKm }
+let lastGood = null;
+const LAST_GOOD_MAX_AGE_MS = 5 * 60 * 1000; // older than 5 minutes is too stale
+const LAST_GOOD_MAX_MOVE_KM = 2; // ignore it if you've moved further than this
 
 // Shortcut for getting page elements.
 const $ = (id) => document.getElementById(id);
@@ -114,24 +120,30 @@ async function loadPlanes() {
   try {
     if (!navigator.onLine) throw new Error("offline");
 
-    // 429 = rate limit; the free services sometimes answer 403 when busy too.
-    // They usually recover within seconds, so quietly try up to 2 more times.
+    // 429 = rate limit. The Worker already retried once; if still busy,
+    // wait 3 seconds and ask one more time.
     const isBusy = (r) => r.status === 429 || r.status === 403;
     let response = await fetch(url);
-    for (let retry = 1; retry <= 2 && isBusy(response); retry++) {
-      $("summary").textContent = "Data service busy, trying again (" + retry + "/2)…";
+    if (isBusy(response)) {
+      $("summary").textContent = "Data service busy, trying again…";
       await new Promise((r) => setTimeout(r, 3000));
       response = await fetch(url);
     }
     if (isBusy(response)) {
-      showMessage("The free flight data service is busy (rate limit). Wait a few seconds and try again.");
-      $("summary").textContent = "";
+      // Still busy: show the last good result for this spot instead, if we have one.
+      if (canReuseLastGood(radiusKm)) {
+        showPlanes(lastGood.states, radiusKm, lastGood.time);
+      } else {
+        showMessage("The free flight data service is busy (rate limit). Wait a few seconds and try again.");
+        $("summary").textContent = "";
+      }
       return;
     }
     if (!response.ok) throw new Error("HTTP " + response.status);
 
     const data = await response.json();
-    showPlanes(data.states || [], radiusKm);
+    lastGood = { states: data.states || [], time: Date.now(), lat: myPosition.lat, lon: myPosition.lon, radiusKm };
+    showPlanes(lastGood.states, radiusKm);
   } catch (err) {
     const offline = !navigator.onLine || err.message === "offline";
     showMessage(offline
@@ -143,10 +155,20 @@ async function loadPlanes() {
   }
 }
 
-// The relay returns each aircraft as an OpenSky-style array. The positions we use:
+// The last good result is usable if it's recent, for (about) the same spot,
+// and was fetched for at least this radius (a smaller one would miss planes).
+function canReuseLastGood(radiusKm) {
+  return lastGood != null &&
+    Date.now() - lastGood.time < LAST_GOOD_MAX_AGE_MS &&
+    lastGood.radiusKm >= radiusKm &&
+    distanceKm(lastGood.lat, lastGood.lon, myPosition.lat, myPosition.lon) < LAST_GOOD_MAX_MOVE_KM;
+}
+
+// The Worker returns each aircraft as an OpenSky-style array. The positions we use:
 // 1 callsign, 2 origin country, 5 longitude, 6 latitude, 7 barometric altitude (m),
 // 8 on ground, 9 speed (m/s), 10 heading (°), 11 vertical rate (m/s), 13 GPS altitude (m)
-function showPlanes(states, radiusKm) {
+// fetchedAt is set only when showing an older saved result.
+function showPlanes(states, radiusKm, fetchedAt = null) {
   const planes = states
     .filter((s) => s[5] != null && s[6] != null && !s[8]) // has a position, not on the ground
     .map((s) => ({
@@ -163,17 +185,20 @@ function showPlanes(states, radiusKm) {
     .filter((p) => p.distance <= radiusKm)
     .sort((a, b) => a.distance - b.distance);
 
-  const time = new Date().toLocaleTimeString();
+  // Normally "updated 20:17:05"; for a saved result "data from 40 s ago".
+  const when = fetchedAt
+    ? "data from " + Math.round((Date.now() - fetchedAt) / 1000) + " s ago, service busy"
+    : "updated " + new Date().toLocaleTimeString();
   const results = $("results");
   results.innerHTML = "";
 
   if (planes.length === 0) {
-    $("summary").textContent = "No aircraft within " + radiusKm + " km right now. (checked " + time + ")";
+    $("summary").textContent = "No aircraft within " + radiusKm + " km right now. (" + when + ")";
     return;
   }
 
   $("summary").textContent = planes.length + " aircraft" +
-    " within " + radiusKm + " km, closest first. (updated " + time + ")";
+    " within " + radiusKm + " km, closest first. (" + when + ")";
   planes.forEach((p) => results.appendChild(planeCard(p)));
 }
 

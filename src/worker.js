@@ -5,12 +5,12 @@
 //
 // Why not call OpenSky directly? OpenSky does not let browsers on other sites
 // read its answers (CORS), and it blocks requests from Cloudflare's servers.
-// So this asks adsb.lol (backup: adsb.fi) instead: free, no key, worldwide.
+// So this asks adsb.lol instead: free, no key, worldwide.
+// (adsb.fi was tried as a backup, but it blocks all requests from Cloudflare.)
 //
 // Usage: GET /api/states?lamin=..&lomin=..&lamax=..&lomax=..
 
 const ADSB_LOL = "https://api.adsb.lol/v2/point";
-const ADSB_FI = "https://opendata.adsb.fi/api/v2"; // backup, same data format
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -37,25 +37,22 @@ export default {
     const lon = (box.lomin + box.lomax) / 2;
     const radiusNm = Math.min(Math.ceil(distanceKm(lat, lon, box.lamax, box.lomax) / 1.852), 250);
 
-    // Try each source in turn; the first good answer wins.
-    const la = lat.toFixed(4), lo = lon.toFixed(4);
-    const sources = [
-      `${ADSB_LOL}/${la}/${lo}/${radiusNm}`,
-      `${ADSB_FI}/lat/${la}/lon/${lo}/dist/${radiusNm}`,
-    ];
+    // adsb.lol sometimes answers 429 "too many requests" for a moment,
+    // so if the first try fails, wait 2 seconds and try once more.
+    const source = `${ADSB_LOL}/${lat.toFixed(4)}/${lon.toFixed(4)}/${radiusNm}`;
     let lastStatus = 502;
-    for (const url of sources) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      if (attempt === 2) await new Promise((r) => setTimeout(r, 2000));
       try {
-        const upstream = await fetch(url, { headers: { "User-Agent": "planes-above-me (hobby project)" } });
+        const upstream = await fetch(source, { headers: { "User-Agent": "planes-above-me (hobby project)" } });
         if (!upstream.ok) { lastStatus = upstream.status; continue; }
         const data = await upstream.json();
-        const aircraft = data.ac || data.aircraft || []; // adsb.lol says "ac", adsb.fi "aircraft"
-        return json({ time: Math.floor(Date.now() / 1000), states: aircraft.map(toOpenSkyState) });
+        return json({ time: Math.floor(Date.now() / 1000), states: (data.ac || []).map(toOpenSkyState) });
       } catch (err) {
         lastStatus = 502;
       }
     }
-    // Both failed: pass the last status on (e.g. 429 rate limit) so the page can explain.
+    // Pass the status on (e.g. 429 rate limit) so the page can fall back / explain.
     return json({ error: "could not get flight data" }, lastStatus);
   },
 };

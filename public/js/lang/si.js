@@ -81,4 +81,5 @@ export default {
   shareText: "{c} දැන් {p} උඩින් පියාසර කළා! Planes Above Me සමඟ දුටුවා",
   shareHere: "{p} උඩින් සජීවී යානා", linkCopied: "සබැඳිය පිටපත් විය", copyLink: "සබැඳිය පිටපත් කරන්න",
   nearbyCities: "යානා ඉහළින්", announce: "ළඟින් යානා {n}ක්. ළඟම: {c}, {d}.",
+  follow: "මෙම ගමන අනුගමනය කරන්න", followed: "අනුගමනය කරන ගමන්",
 };

@@ -79,4 +79,5 @@ export default {
   shareText: "{c} が今 {p} の上を飛びました！Planes Above Me で発見",
   shareHere: "{p} 上空のライブ飛行機", linkCopied: "リンクをコピーしました", copyLink: "リンクをコピー",
   nearbyCities: "上空の飛行機:", announce: "近くに {n} 機。最も近いのは {c}、{d}。",
+  follow: "この便を追跡", followed: "追跡中のフライト",
 };

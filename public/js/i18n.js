@@ -107,6 +107,7 @@ const en = {
   copyLink: "Copy link",
   nearbyCities: "Planes over",
   announce: "{n} aircraft nearby. Closest: {c}, {d}.",
+  follow: "Follow this flight", followed: "Followed flights",
 };
 
 export const EN = en;

@@ -8,12 +8,15 @@
 //   POST /api/spot                            add a spotted aircraft type to the leaderboard
 //   GET  /api/stats                           visitors, busiest skies, leaderboard
 //   GET  /over/<city>                         the site, preset to a city (for sharing/search)
+//   /api/flights…, /api/metar, /flight/<id>   flight following (see src/flights.js)
+// A Cron Trigger runs every minute to record followed flights.
 //
 // Why not call OpenSky directly? OpenSky does not let browsers on other sites read its
 // answers (CORS), and it blocks requests from Cloudflare's servers. So this asks adsb.lol
 // instead: free, no key, worldwide. (adsb.fi was tried too, but blocks Cloudflare.)
 
 import { parseBox, snapQuery, toOpenSkyState, cleanNick, cleanType, CITIES } from "./lib.js";
+import { flightsApi, recordAll } from "./flights.js";
 
 const ADSB_LOL = "https://api.adsb.lol/v2";
 const UA = { "User-Agent": "planes-above-me (hobby project; https://planes-above-me.binethwise.workers.dev)" };
@@ -41,12 +44,19 @@ export default {
       if (path === "/api/spot" && request.method === "POST") return await spot(request, env);
       if (path === "/api/stats") return await stats(env);
       if (path.startsWith("/over/")) return await cityPage(request, url, env);
+      if (path === "/api/flights" || path.startsWith("/api/flights/") || path === "/api/metar") return await flightsApi(request, url, env, ctx);
+      if (path.startsWith("/flight/")) return env.ASSETS.fetch(new Request(new URL("/flight", url), request));
       if (path.startsWith("/api/")) return json({ error: "not found" }, 404);
     } catch (err) {
       console.error("worker error", path, err?.stack || err);
       return json({ error: "server error" }, 500);
     }
     return env.ASSETS.fetch(request);
+  },
+
+  // Every minute: record all followed flights.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(recordAll(env).catch((e) => console.error("recorder", e?.stack || e)));
   },
 };
 

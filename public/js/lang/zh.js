@@ -79,4 +79,5 @@ export default {
   shareText: "{c} 刚刚飞过 {p}！用 Planes Above Me 看到的",
   shareHere: "{p} 上空的实时飞机", linkCopied: "链接已复制", copyLink: "复制链接",
   nearbyCities: "上空的飞机：", announce: "附近 {n} 架飞机。最近：{c}，{d}。",
+  follow: "跟踪此航班", followed: "正在跟踪的航班",
 };

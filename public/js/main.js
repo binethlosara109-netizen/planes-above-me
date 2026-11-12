@@ -518,7 +518,8 @@ function renderDetail(p) {
       h("div", { class: "d-head" }, title, airlineLine, regLine, badgeRow),
       h("div", { id: "d-alert" }),
       routeBox,
-      sawBtn,
+      h("div", { class: "two-btns" }, sawBtn,
+        h("button", { class: "btn btn-follow", onclick: (e) => followFlight(p, e.currentTarget) }, "📡 " + t("follow"))),
       h("div", { class: "d-section" }, t("secLive")),
       h("div", { class: "grid", id: "d-live" }),
       h("div", { class: "d-section" }, t("secWeather")),
@@ -654,6 +655,23 @@ async function markSeen(p, btn) {
   if (settings().sound) ping(true);
   renderLog();
   if (settings().nick && p.typeCode) api.joinLeaderboard(settings().nick, [p.typeCode]).catch(() => {});
+}
+
+// Start (or join) a recorded flight-following session and open the flight monitor.
+async function followFlight(p, btn) {
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/flights", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ icao24: p.hex, callsign: p.hasCallsign ? p.callsign : null }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.id) { location.href = `/flight/${data.id}`; return; }
+    toast(data.error || t("loadFail"));
+  } catch {
+    toast(t("loadFail"));
+  }
+  btn.disabled = false;
 }
 
 async function shareThisPlane(p) {
@@ -797,7 +815,7 @@ async function renderLog() {
       loadLeaders(leaders);
     } }, h("p", { class: "hint" }, s.nick ? t("joined", { n: s.nick }) : t("joinBoard")), nickInput, h("button", { class: "btn" }, t("join"))),
     leaders,
-    h("p", { class: "links-row" }, h("a", { href: "/stats.html" }, "📊 " + t("statsLink")), " · ", h("a", { href: "/privacy.html" }, "🔒 " + t("privacyLink"))));
+    h("p", { class: "links-row" }, h("a", { href: "/flight/" }, "📡 " + t("followed")), " · ", h("a", { href: "/stats.html" }, "📊 " + t("statsLink")), " · ", h("a", { href: "/privacy.html" }, "🔒 " + t("privacyLink"))));
   loadLeaders(leaders);
 }
 

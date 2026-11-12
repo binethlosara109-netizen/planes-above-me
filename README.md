@@ -26,6 +26,13 @@ Free, no sign-up, works on phones and desktops, installable as an app.
   lite mode, screen-reader friendly.
 - **Location:** GPS, or type a place / coordinates; falls back to your last place.
 - **Public stats page** (`/stats.html`) and a privacy page (`/privacy.html`).
+- **Flight monitor** (`/flight/<id>`): tap "Follow this flight" on any plane to record it
+  from wherever it is until it lands, even after you close the page (a Cron Trigger polls
+  every minute; ~10 s updates while someone is watching). Live telemetry, altitude and
+  speed graphs, phase strip, event timeline, route progress and ETA, METAR weather for both
+  airports, ATC stage with frequencies and LiveATC links, and replay (`/flight/<id>/replay`).
+  Everything is labelled ● observed (sent by the aircraft) or ◇ inferred (worked out here);
+  reception gaps are shown, never filled in. ATC audio is linked, never recorded or relayed.
 
 ## How it works
 

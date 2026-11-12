@@ -13,7 +13,11 @@ command = "npm test"
 directory = "./public"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/over/*"]
+run_worker_first = ["/api/*", "/over/*", "/flight/*"]
+
+# Record followed flights every minute, even when nobody has the page open.
+[triggers]
+crons = ["* * * * *"]
 
 # Free database for stats, the leaderboard and error reports.
 [[d1_databases]]

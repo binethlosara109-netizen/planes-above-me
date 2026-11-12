@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070b16">
+  <title>Flight monitor – Planes Above Me</title>
+  <meta name="description" content="Follow one real aircraft from departure to arrival: live position, altitude and speed graphs, flight timeline, airport weather and ATC listening links.">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/flight.css">
+</head>
+<body class="fm">
+  <div class="fm-app">
+    <header class="fm-top">
+      <a class="btn btn-icon" href="/" aria-label="Back to the map">←</a>
+      <div class="fm-title">
+        <div class="fm-kicker">FLIGHT MONITOR</div>
+        <h1 id="fmCallsign">…</h1>
+        <p id="fmSub" class="fm-sub"></p>
+      </div>
+      <div class="fm-status">
+        <span id="fmStatus" class="pill">Loading…</span>
+        <span id="fmAge" class="fm-age"></span>
+      </div>
+      <a id="fmModeLink" class="btn" href="#">Replay</a>
+    </header>
+
+    <!-- Shown at /flight/ with no flight picked -->
+    <section id="fmList" class="fm-list" hidden>
+      <h2>Flights being followed</h2>
+      <p class="hint">Open any plane on the <a href="/">map</a> and tap <b>“Follow this flight”</b>. Recording keeps going after you close the page, until the plane lands.</p>
+      <ul id="fmListItems"></ul>
+    </section>
+
+    <main id="fmMain" class="fm-main">
+      <section class="fm-mapwrap">
+        <div id="fmMap"></div>
+        <div class="fm-key" aria-label="What the labels mean">
+          <span class="tag-obs">● Observed</span> = sent by the aircraft ·
+          <span class="tag-inf">◇ Inferred</span> = worked out by this site ·
+          <span class="tag-atc">🎧 ATC</span> = links to listen
+        </div>
+        <div id="fmReplay" class="fm-replay" hidden>
+          <button id="fmPlay" class="btn btn-icon" aria-label="Play">▶</button>
+          <input id="fmSlider" type="range" min="0" max="0" value="0" aria-label="Replay position">
+          <select id="fmSpeed" aria-label="Replay speed">
+            <option value="30">30×</option><option value="120" selected>120×</option><option value="600">600×</option>
+          </select>
+          <span id="fmReplayTime" class="mono"></span>
+        </div>
+      </section>
+
+      <aside class="fm-side">
+        <div id="fmGap" class="message" hidden></div>
+
+        <div class="fm-tiles">
+          <div class="stat"><span class="k">● Altitude</span><span id="tAlt" class="v">–</span></div>
+          <div class="stat"><span class="k">● Ground speed</span><span id="tGs" class="v">–</span></div>
+          <div class="stat"><span class="k">● Heading</span><span id="tHdg" class="v">–</span></div>
+          <div class="stat"><span class="k">● Vertical rate</span><span id="tVr" class="v">–</span></div>
+          <div class="stat"><span class="k">● Squawk</span><span id="tSq" class="v">–</span></div>
+          <div class="stat"><span class="k">◇ Phase</span><span id="tPhase" class="v">–</span></div>
+        </div>
+
+        <div class="card">
+          <div class="k">◇ Flight progress</div>
+          <ol id="fmPhases" class="phases">
+            <li data-p="ground">Gate</li><li data-p="climb">Climb</li><li data-p="cruise">Cruise</li><li data-p="descent">Descent</li><li data-p="approach">Approach</li><li data-p="landed">Arrived</li>
+          </ol>
+          <div id="fmRoute" class="fm-route"></div>
+        </div>
+
+        <div class="fm-charts">
+          <figure class="card chart"><figcaption class="k">● Altitude (ft)</figcaption><div id="chAlt" class="chart-host"></div></figure>
+          <figure class="card chart"><figcaption class="k">● Ground speed (kt)</figcaption><div id="chGs" class="chart-host"></div></figure>
+        </div>
+
+        <div class="card">
+          <div class="k">Timeline</div>
+          <ol id="fmEvents" class="events"></ol>
+        </div>
+
+        <div class="card">
+          <div class="k">🎧 ATC communications</div>
+          <div id="fmAtc"></div>
+          <p class="fine">We only link to <a href="https://www.liveatc.net" target="_blank" rel="noopener">LiveATC.net</a>, an authorised listening service. We never record, relay or transcribe radio. Feeds exist only where volunteers run receivers, and you hear every aircraft on that frequency, not just this one.</p>
+        </div>
+
+        <div class="card">
+          <div class="k">● Airport weather (METAR)</div>
+          <div id="fmWx" class="hint">…</div>
+        </div>
+
+        <p class="fine">Positions: <a href="https://adsb.lol" target="_blank" rel="noopener">adsb.lol</a> (ODbL) · Routes: <a href="https://www.adsbdb.com" target="_blank" rel="noopener">adsbdb</a> · Weather: <a href="https://aviationweather.gov" target="_blank" rel="noopener">Aviation Weather Center</a> · Airports: OurAirports.
+          Gaps happen where no receiver hears the plane (often over oceans); we show them instead of filling them in.</p>
+      </aside>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script type="module" src="/js/flight.js"></script>
+</body>
+</html>

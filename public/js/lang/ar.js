@@ -79,4 +79,5 @@ export default {
   shareText: "{c} مرّت للتو فوق {p}! رصدتها عبر Planes Above Me",
   shareHere: "طائرات مباشرة فوق {p}", linkCopied: "نُسخ الرابط", copyLink: "نسخ الرابط",
   nearbyCities: "طائرات فوق", announce: "{n} طائرة قريبة. الأقرب: {c}، {d}.",
+  follow: "تابع هذه الرحلة", followed: "الرحلات المتابَعة",
 };

@@ -79,4 +79,5 @@ export default {
   shareText: "{c} ist gerade über {p} geflogen! Entdeckt mit Planes Above Me",
   shareHere: "Live-Flugzeuge über {p}", linkCopied: "Link kopiert", copyLink: "Link kopieren",
   nearbyCities: "Flugzeuge über", announce: "{n} Flugzeuge in der Nähe. Am nächsten: {c}, {d}.",
+  follow: "Diesen Flug verfolgen", followed: "Verfolgte Flüge",
 };

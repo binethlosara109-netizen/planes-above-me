@@ -79,4 +79,5 @@ export default {
   shareText: "{c} vient de survoler {p} ! Repéré avec Planes Above Me",
   shareHere: "Avions en direct au-dessus de {p}", linkCopied: "Lien copié", copyLink: "Copier le lien",
   nearbyCities: "Avions au-dessus de", announce: "{n} avions à proximité. Le plus proche : {c}, {d}.",
+  follow: "Suivre ce vol", followed: "Vols suivis",
 };

@@ -3,12 +3,12 @@
 // - Live data (/api/*, other websites): always from the network, never cached.
 // Bump VERSION when the list of files changes.
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "planes-" + VERSION;
 const SHELL = [
   "/", "/style.css", "/manifest.webmanifest",
   "/js/main.js", "/js/geo.js", "/js/format.js", "/js/i18n.js", "/js/settings.js", "/js/api.js",
-  "/js/mapview.js", "/js/spotter.js", "/js/sky.js", "/js/share.js",
+  "/js/mapview.js", "/js/spotter.js", "/js/sky.js", "/js/share.js", "/js/flight.js", "/flight.css",
   "/icons/icon.svg", "/icons/icon-192.png",
 ];
 
